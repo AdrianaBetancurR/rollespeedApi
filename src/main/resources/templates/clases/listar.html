@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Listado de Clases</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .table {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #0066ff;
+            border-color: #006eff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar}"></div>
+
+    <!-- Contenido Principal -->
+    <div class="container">
+        <h1>Listado de Clases</h1>
+        <a th:href="@{/clases/nueva}" class="btn btn-primary mb-3">Crear Nueva Clase</a>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Nivel</th>
+                    <th>Fecha de Inicio</th>
+                    <th>Fecha de Fin</th>
+                    <th>Aula</th>
+                    <th>Horario</th>
+                    <th>Instructor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="clase : ${clases}">
+                    <td th:text="${clase.nombre}"></td>
+                    <td th:text="${clase.nivel}"></td>
+                    <td th:text="${#temporals.format(clase.fechaInicio, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${#temporals.format(clase.fechaFin, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${clase.aula}"></td>
+                    <td th:text="${clase.horario}"></td>
+                    <td th:text="${clase.instructor.nombre}"></td>
+                    <td>
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#inscripcionModal" th:attr="data-clase-id=${clase.id}">Inscribirse</button>
+                        <button th:attr="onclick='mostrarEstudiantesInscritos(' + ${clase.id} + ')'" class="btn btn-warning">Ver inscritos</button>
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal de Inscripción -->
+    <div class="modal fade" id="inscripcionModal" tabindex="-1" aria-labelledby="inscripcionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="inscripcionModalLabel">Inscribirse a la Clase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="inscripcionForm">
+                        <!-- Campo oculto para el ID de la clase -->
+                        <input type="hidden" id="claseId" name="claseId">
+                        
+                        <div class="mb-3">
+                            <label for="estudianteSelect" class="form-label">Selecciona un estudiante:</label>
+                            <select class="form-select" id="estudianteSelect" name="estudianteId" required>
+                                <option value="">-- Selecciona un estudiante --</option>
+                                <option th:each="estudiante : ${estudiantes}" 
+                                        th:value="${estudiante.id}" 
+                                        th:text="${estudiante.nombre} + ' (' + ${estudiante.email} + ')'">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento:</label>
+                            <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono:</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" disabled>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="confirmarInscripcion">Inscribirse</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para mostrar estudiantes inscritos -->
+
+<!-- Modal para mostrar estudiantes inscritos -->
+<div class="modal fade" id="estudiantesInscritosModal" tabindex="-1" aria-labelledby="estudiantesInscritosModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+           
+            <div class="modal-body">
+                <table class="table table-striped" id="tablaEstudiantes">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Correo Electrónico</th>
+                            <th>Teléfono</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los estudiantes se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS y dependencias -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS y dependencias -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lógica para el modal de inscripción
+            var inscripcionModal = document.getElementById('inscripcionModal');
+            var confirmarInscripcionBtn = document.getElementById('confirmarInscripcion');
+            var estudianteSelect = document.getElementById('estudianteSelect');
+            var claseIdInput = document.getElementById('claseId');
+            var fechaNacimientoInput = document.getElementById('fechaNacimiento');
+            var telefonoInput = document.getElementById('telefono');
+
+            inscripcionModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var claseId = button.getAttribute('data-clase-id');
+                claseIdInput.value = claseId;
+            });
+
+            estudianteSelect.addEventListener('change', function() {
+                var estudianteId = this.value;
+
+                if (estudianteId) {
+                    fetch(`/inscripcion-estudiantes/${estudianteId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            fechaNacimientoInput.value = data.fechaNacimiento || '';
+                            telefonoInput.value = data.telefono || '';
+                        })
+                        .catch(error => console.error('Error:', error));
+                } else {
+                    fechaNacimientoInput.value = '';
+                    telefonoInput.value = '';
+                }
+            });
+
+            confirmarInscripcionBtn.addEventListener('click', function() {
+                var claseId = claseIdInput.value;
+                var estudianteId = estudianteSelect.value;
+
+                if (estudianteId) {
+                    fetch(`/clases/inscribir/${claseId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ estudianteId: estudianteId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Estudiante inscrito exitosamente.');
+                            location.reload();
+                        } else {
+                            alert('Error al inscribir al estudiante.');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+                } else {
+                    alert('Por favor, selecciona un estudiante.');
+                }
+            });
+        });
+
+         // Función para mostrar estudiantes inscritos en el modal
+    function mostrarEstudiantesInscritos(claseId) {
+        fetch(`/clases/estudiantes-inscritos/${claseId}`)
+            .then(response => response.json())
+            .then(estudiantes => {
+                const tablaEstudiantes = document.getElementById('tablaEstudiantes').getElementsByTagName('tbody')[0];
+                tablaEstudiantes.innerHTML = ''; // Limpiar la tabla antes de agregar datos nuevos
+
+                estudiantes.forEach(estudiante => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${estudiante.nombre}</td>
+                        <td>${estudiante.email || 'No disponible'}</td>
+                        <td>${estudiante.telefono || 'No disponible'}</td>
+                    `;
+                    tablaEstudiantes.appendChild(fila);
+                });
+
+                // Mostrar el modal
+                const modal = new bootstrap.Modal(document.getElementById('estudiantesInscritosModal'));
+                modal.show();
+            })
+            .catch(error => console.error('Error al cargar los estudiantes:', error));
+    }
+</script>
+

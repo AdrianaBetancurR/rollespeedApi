@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos de la Escuela</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Contenido superior -->
+    <div class="container mt-4">
+        <div class="card p-4 shadow-lg">
+            <h1 class="text-primary fw-bold text-center">Eventos de la Escuela</h1>
+            <p class="mt-3 text-muted text-center">
+                En <strong>RollerSpeed</strong>, organizamos una variedad de eventos para fomentar el aprendizaje, 
+                la competencia sana y la comunidad entre nuestros estudiantes. ¡No te pierdas nuestras actividades!
+            </p>
+        </div>
+    </div>
+
+    <!-- Lista de eventos -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="list-group">
+                    <!-- Iterar sobre la lista de eventos -->
+                    <div th:each="evento : ${eventos}" class="list-group-item mb-3 shadow-sm">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1" th:text="${evento.nombre}">Nombre del Evento</h5>
+                            <small th:text="${evento.fecha}">Fecha</small>
+                        </div>
+                        <p class="mb-1">
+                            <strong>Horario:</strong> <span th:text="${evento.horario}">Horario</span><br>
+                            <strong>Ubicación:</strong> <span th:text="${evento.ubicacion}">Ubicación</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

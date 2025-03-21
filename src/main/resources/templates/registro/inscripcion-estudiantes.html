@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripción de Estudiantes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar}"></div>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <!-- Mensaje de éxito -->
+                <div id="mensajeExito" class="alert alert-success text-center" style="display: none;">
+                    Estudiante registrado exitosamente.
+                </div>
+
+                <h1 class="text-center mb-4">Inscripción de Estudiantes</h1>
+                <!-- Formulario de inscripción -->
+                <form id="formularioInscripcion" th:action="@{/inscripcion-estudiantes}" th:object="${estudiante}" method="post">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" th:field="*{nombre}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" th:field="*{email}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" th:field="*{telefono}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="genero" class="form-label">Género</label>
+                        <select class="form-select" id="genero" name="genero" th:field="*{genero}" required>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento" th:field="*{fechaNacimiento}" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Enviar</button>
+                </form>
+
+                <!-- Botón para abrir el modal -->
+                <button type="button" id="btnVerEstudiantes" class="btn btn-primary mt-3 w-100" data-bs-toggle="modal" data-bs-target="#modalEstudiantes">
+                    Ver Estudiantes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Estudiantes -->
+    <div class="modal fade" id="modalEstudiantes" tabindex="-1" aria-labelledby="modalEstudiantesLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEstudiantesLabel">Lista de Estudiantes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Género</th>
+                                <th>Fecha de Nacimiento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaEstudiantes">
+                            <!-- Filas de estudiantes se llenarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Manejar el envío del formulario
+        document.getElementById('formularioInscripcion').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const estudiante = {};
+            formData.forEach((value, key) => {
+                estudiante[key] = value;
+            });
+
+            fetch('/inscripcion-estudiantes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(estudiante),
+            })
+            .then(response => response.text())
+            .then(message => {
+                document.getElementById('mensajeExito').style.display = 'block';
+                document.getElementById('mensajeExito').innerText = message;
+                document.getElementById('formularioInscripcion').reset();
+                actualizarListaEstudiantes(); // Actualizar la lista de estudiantes en el modal
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Evento para actualizar la lista cuando se abre el modal
+        document.getElementById("btnVerEstudiantes").addEventListener("click", actualizarListaEstudiantes);
+
+        // Actualizar la lista de estudiantes en el modal
+        function actualizarListaEstudiantes() {
+            fetch('/inscripcion-estudiantes/todos')
+                .then(response => response.json())
+                .then(estudiantes => {
+                    const tabla = document.getElementById('tablaEstudiantes');
+                    tabla.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos datos
+
+                    estudiantes.forEach(estudiante => {
+                        const fila = document.createElement("tr");
+                        fila.innerHTML = `
+                            <td>${estudiante.nombre}</td>
+                            <td>${estudiante.email}</td>
+                            <td>${estudiante.telefono}</td>
+                            <td>${estudiante.genero}</td>
+                            <td>${estudiante.fechaNacimiento}</td>
+                        `;
+                        tabla.appendChild(fila);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

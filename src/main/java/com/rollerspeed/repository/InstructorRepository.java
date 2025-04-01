@@ -2,8 +2,9 @@ package com.rollerspeed.repository;
 
 import com.rollerspeed.models.Instructor;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
-@Repository
 public interface InstructorRepository extends JpaRepository<Instructor, Long> {
+    Optional<Instructor> findById(Long id);  // Busca por ID
+    Optional<Instructor> findByEmail(String email);  // Busca por correo
 }

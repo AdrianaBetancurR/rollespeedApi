@@ -1,27 +1,26 @@
 package com.rollerspeed.controller;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-
 import com.rollerspeed.models.Clase;
 import com.rollerspeed.models.Estudiante;
 import com.rollerspeed.models.Instructor;
 import com.rollerspeed.services.ClaseService;
 import com.rollerspeed.services.EstudianteService;
 import com.rollerspeed.services.InstructorService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+@Tag(name = "Clases", description = "Operaciones relacionadas con la gestión de clases")
 @Controller
 @RequestMapping("/clases")
 public class ClaseController {
@@ -35,7 +34,8 @@ public class ClaseController {
     @Autowired
     private EstudianteService estudianteService;
 
-    // Listar todas las clases
+    @Operation(summary = "Listar clases", description = "Obtiene una lista de todas las clases disponibles")
+    @ApiResponse(responseCode = "200", description = "Lista de clases obtenida correctamente")
     @GetMapping
     public String listarClases(Model model) {
         List<Clase> clases = claseService.findAll();
@@ -47,7 +47,9 @@ public class ClaseController {
         return "clases/listar";
     }
 
-    // Mostrar formulario para crear una nueva clase
+    @Operation(summary = "Mostrar formulario de nueva clase", 
+               description = "Muestra el formulario para crear una nueva clase")
+    @ApiResponse(responseCode = "200", description = "Formulario mostrado correctamente")
     @GetMapping("/nueva")
     public String mostrarFormularioNuevaClase(Model model) {
         List<Instructor> instructores = instructorService.getAllInstructores();
@@ -56,43 +58,40 @@ public class ClaseController {
         return "clases/formulario";
     }
 
-    // Guardar una nueva clase
+    @Operation(summary = "Guardar clase", 
+               description = "Guarda una nueva clase en el sistema")
+    @ApiResponse(responseCode = "302", description = "Clase creada, redirección a lista de clases")
     @PostMapping("/guardar")
     public String guardarClase(@ModelAttribute Clase clase) {
         claseService.save(clase);
         return "redirect:/clases";
     }
 
-    // Ver detalles de una clase específica
+    @Operation(summary = "Ver detalles de clase", 
+               description = "Muestra los detalles de una clase específica")
+    @ApiResponse(responseCode = "200", description = "Detalles de clase obtenidos correctamente")
+    @ApiResponse(responseCode = "302", description = "Redirección si la clase no existe")
     @GetMapping("/{id}")
-    public String verClase(@PathVariable Long id, Model model) {
+    public String verClase(
+            @Parameter(description = "ID de la clase", example = "1")
+            @PathVariable Long id, Model model) {
         Clase clase = claseService.findById(id);
         if (clase == null) {
-            return "redirect:/clases"; // Redirigir si la clase no existe
+            return "redirect:/clases";
         }
         model.addAttribute("clase", clase);
         return "clases/detalles";
     }
 
-    // Mostrar formulario para inscribir un estudiante en una clase
-    @GetMapping("/inscribirse/{id}")
-    public String mostrarFormularioInscripcion(@PathVariable Long id, Model model) {
-        Clase clase = claseService.findById(id);
-        if (clase == null) {
-            return "redirect:/clases"; // Redirigir si la clase no existe
-        }
-
-        List<Estudiante> estudiantes = estudianteService.getAllEstudiantes();
-        model.addAttribute("clase", clase);
-        model.addAttribute("estudiantes", estudiantes);
-        model.addAttribute("estudiante", new Estudiante());
-
-        return "clases/inscripcion";
-    }
-
-    // Inscribir un estudiante en una clase (API REST)
+    @Operation(summary = "Inscribir estudiante", 
+               description = "Inscribe un estudiante en una clase específica")
+    @ApiResponse(responseCode = "200", description = "Estudiante inscrito correctamente")
+    @ApiResponse(responseCode = "400", description = "Clase o estudiante no encontrado")
     @PostMapping("/inscribir/{id}")
-    public ResponseEntity<?> inscribirEstudiante(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> inscribirEstudiante(
+            @Parameter(description = "ID de la clase", example = "1")
+            @PathVariable Long id, 
+            @RequestBody Map<String, Object> payload) {
         Long estudianteId = Long.parseLong(payload.get("estudianteId").toString());
 
         Clase clase = claseService.findById(id);
@@ -106,19 +105,16 @@ public class ClaseController {
         return ResponseEntity.ok(Collections.singletonMap("success", "Estudiante inscrito correctamente"));
     }
 
-    // Obtener estudiantes inscritos en una clase (API REST)
+    @Operation(summary = "Obtener estudiantes inscritos", 
+               description = "Obtiene la lista de estudiantes inscritos en una clase")
+    @ApiResponse(responseCode = "200", description = "Lista de estudiantes obtenida correctamente")
+    @ApiResponse(responseCode = "404", description = "Clase no encontrada")
     @GetMapping("/estudiantes-inscritos/{id}")
-    public ResponseEntity<List<Estudiante>> getEstudiantesInscritos(@PathVariable Long id) {
+    public ResponseEntity<List<Estudiante>> getEstudiantesInscritos(
+            @Parameter(description = "ID de la clase", example = "1")
+            @PathVariable Long id) {
         Clase clase = claseService.findByIdWithEstudiantes(id)
                 .orElseThrow(() -> new RuntimeException("Clase no encontrada"));
         return ResponseEntity.ok(clase.getEstudiantes());
-    }
-
-    // Mostrar formulario de inscripción de estudiantes
-    @GetMapping("/inscripcion-estudiantes")
-    public String mostrarFormularioInscripcionEstudiantes(Model model) {
-        model.addAttribute("estudiante", new Estudiante());
-        model.addAttribute("estudiantes", estudianteService.getAllEstudiantes());
-        return "registro/inscripcion-estudiantes";
     }
 }

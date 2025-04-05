@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -51,6 +52,7 @@ public class ClaseController {
                description = "Muestra el formulario para crear una nueva clase")
     @ApiResponse(responseCode = "200", description = "Formulario mostrado correctamente")
     @GetMapping("/nueva")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public String mostrarFormularioNuevaClase(Model model) {
         List<Instructor> instructores = instructorService.getAllInstructores();
         model.addAttribute("instructores", instructores);
@@ -62,6 +64,7 @@ public class ClaseController {
                description = "Guarda una nueva clase en el sistema")
     @ApiResponse(responseCode = "302", description = "Clase creada, redirección a lista de clases")
     @PostMapping("/guardar")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public String guardarClase(@ModelAttribute Clase clase) {
         claseService.save(clase);
         return "redirect:/clases";
@@ -88,6 +91,7 @@ public class ClaseController {
     @ApiResponse(responseCode = "200", description = "Estudiante inscrito correctamente")
     @ApiResponse(responseCode = "400", description = "Clase o estudiante no encontrado")
     @PostMapping("/inscribir/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<?> inscribirEstudiante(
             @Parameter(description = "ID de la clase", example = "1")
             @PathVariable Long id, 
@@ -110,6 +114,7 @@ public class ClaseController {
     @ApiResponse(responseCode = "200", description = "Lista de estudiantes obtenida correctamente")
     @ApiResponse(responseCode = "404", description = "Clase no encontrada")
     @GetMapping("/estudiantes-inscritos/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Estudiante>> getEstudiantesInscritos(
             @Parameter(description = "ID de la clase", example = "1")
             @PathVariable Long id) {

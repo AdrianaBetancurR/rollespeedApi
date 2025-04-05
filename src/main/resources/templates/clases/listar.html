@@ -30,7 +30,11 @@
     <!-- Contenido Principal -->
     <div class="container">
         <h1>Listado de Clases</h1>
-        <a th:href="@{/clases/nueva}" class="btn btn-primary mb-3">Crear Nueva Clase</a>
+        <!-- Mostrar solo si es INSTRUCTOR o ADMIN -->
+<div th:if="${#authorization.expression('hasAnyRole(''INSTRUCTOR'', ''ADMIN'')')}" 
+class="d-flex align-items-center mb-3">
+<a th:href="@{/clases/nueva}" class="btn btn-primary">Crear Nueva Clase</a>
+</div>
         <table class="table table-striped">
             <thead>
                 <tr>

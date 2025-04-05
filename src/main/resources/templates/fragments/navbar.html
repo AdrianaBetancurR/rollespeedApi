@@ -1,4 +1,6 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light" xmlns:th="http://www.thymeleaf.org">
+<nav class="navbar navbar-expand-lg navbar-light bg-light" 
+     xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
   <div class="container-fluid">
     <!-- Logo -->
     <a class="navbar-brand" th:href="@{/}">
@@ -13,7 +15,7 @@
     <!-- Contenido del navbar -->
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
-        <!-- Corporativo -->
+        <!-- Corporativo (visible para todos) -->
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarCorporativo" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Corporativo
@@ -26,27 +28,61 @@
           </ul>
         </li>
 
-        <!-- Eventos -->
+        <!-- Eventos (visible para todos) -->
         <li class="nav-item">
           <a class="nav-link" th:href="@{/eventos}">Eventos de la Escuela</a>
         </li>
 
-        <!-- Registro -->
-        <li class="nav-item dropdown">
+        <!-- Registro (visible según rol) -->
+        <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
           <a class="nav-link dropdown-toggle" href="#" id="navbarRegistro" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Registro
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarRegistro">
-            <li><a class="dropdown-item" th:href="@{/inscripcion-estudiantes}">Inscripción de Estudiantes</a></li>
-            <li><a class="dropdown-item" th:href="@{/inscripcion-instructores}">Inscripción de Instructor</a></li>
+            <li sec:authorize="hasRole('ESTUDIANTE')">
+              <a class="dropdown-item" th:href="@{/inscripcion-estudiantes}">Inscripción de Estudiantes</a>
+            </li>
+            <li sec:authorize="hasAnyRole('INSTRUCTOR', 'ADMIN')">
+              <a class="dropdown-item" th:href="@{/inscripcion-instructores}">Inscripción de Instructor</a>
+            </li>
           </ul>
         </li>
 
-        <!-- Clases -->
-        <li class="nav-item">
+        <!-- Clases (visible para todos los autenticados) -->
+        <li class="nav-item" sec:authorize="isAuthenticated()">
           <a class="nav-link" th:href="@{/clases}">Clases</a>
         </li>
 
+        <!-- Panel Admin (solo para admin) -->
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+          <a class="nav-link" th:href="@{/admin}">Panel Admin</a>
+        </li>
+      </ul>
+
+      <!-- Sección de autenticación (derecha) -->
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item" sec:authorize="!isAuthenticated()">
+          <a class="nav-link" th:href="@{/login}">Iniciar Sesión</a>
+        </li>
+        <li class="nav-item" sec:authorize="!isAuthenticated()">
+          <a class="nav-link" th:href="@{/registro}">Registrarse</a>
+        </li>
+        <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span sec:authentication="name"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
+            <li>
+              <a class="dropdown-item" th:href="@{/perfil}">Mi Perfil</a>
+            </li>
+            <li>
+              <form th:action="@{/logout}" method="post">
+                <button class="dropdown-item" type="submit">Cerrar Sesión</button>
+              </form>
+            </li>
+          </ul>
+        </li>
+      </ul>
     </div>
   </div>
 </nav>

@@ -3,9 +3,11 @@ package com.rollerspeed.config;
 import com.rollerspeed.repository.UsuarioRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,12 +19,14 @@ import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+                // Acceso público
                 .requestMatchers(
                     new AntPathRequestMatcher("/"),
                     new AntPathRequestMatcher("/index"),
@@ -38,13 +42,37 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/swagger-ui/**"),
                     new AntPathRequestMatcher("/swagger-ui.html"),
                     new AntPathRequestMatcher("/swagger-resources/**"),
-                    new AntPathRequestMatcher("/webjars/**")
+                    new AntPathRequestMatcher("/webjars/**"),
+                    new AntPathRequestMatcher("/eventos"),
+                    new AntPathRequestMatcher("/mision"),
+                    new AntPathRequestMatcher("/vision"),
+                    new AntPathRequestMatcher("/valores"),
+                    new AntPathRequestMatcher("/servicios")
                 ).permitAll()
+
+                // Rutas protegidas por rol
+                .requestMatchers(
+                    new AntPathRequestMatcher("/inscripcion-estudiantes"),
+                    new AntPathRequestMatcher("/mis-clases")
+                
+                ).hasRole("ESTUDIANTE")
+
+                .requestMatchers(
+                    new AntPathRequestMatcher("/inscripcion-instructores"),
+                    new AntPathRequestMatcher("/clases/nueva"),
+                    new AntPathRequestMatcher("/clases/guardar"),
+                    new AntPathRequestMatcher("/clases/inscritos/**")
+                ).hasAnyRole("INSTRUCTOR", "ADMIN")
+
+                .requestMatchers(
+                    new AntPathRequestMatcher("/admin/**")
+                ).hasRole("ADMIN")
+
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/", true)
+                .defaultSuccessUrl("/?login=true", true)
                 .failureUrl("/login?error=true")
                 .permitAll()
             )
@@ -53,8 +81,11 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/?logout=true")
                 .permitAll()
             )
+            .exceptionHandling(exception -> exception
+                .accessDeniedPage("/acceso-denegado")
+            )
             .csrf(csrf -> csrf.disable());
-        
+
         return http.build();
     }
 
@@ -66,7 +97,7 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService(UsuarioRepository usuarioRepository) {
         return username -> usuarioRepository.findByEmail(username)
-            .map(usuario -> new org.springframework.security.core.userdetails.User(
+            .map(usuario -> new User(
                 usuario.getEmail(),
                 usuario.getPassword(),
                 usuario.getRoles().stream()
